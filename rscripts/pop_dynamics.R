@@ -171,3 +171,88 @@ par.C17 <- list(
   e.z = 0.75,
   d.z = 0.003
 )
+
+
+# P14 with fixed P
+
+P14_fixed <- function(time, parms, state){
+  with(as.list(c(state, parms)), {
+    # Producer
+    dx <- b * x * min(1-(x/k), 1-(q/Q)) - min((c*x)/(a+x), (f.hat * theta)/Q) * y
+    
+    # Grazer
+    dy <- min(e.hat * (c*x)/(a+x), Q/theta * (c*x)/(a+x), e.hat * f.hat * Q/theta) * y - d * y
+    
+    # Quota
+    pf <- P - Q*x - theta * y
+    v <- ((c.hat * pf)/(a.hat + pf)) * ((Q.hat - Q)/(Q.hat - q))
+    dQ <- v - b * min(Q * (1-(x/k)), (Q - q))
+    
+    # return
+    return(list(c(dx, dy, dQ)))
+  })
+}
+
+
+par.P14fixed <- list(
+  P = 0.03, # up to 0.2 mg/day
+  b = 1.2, # /day
+  d = 0.25, # /day
+  theta = 0.03, # mg P / mg C
+  q = 0.0038,
+  e.hat = 0.8,
+  k = 1.5,
+  f.hat = 0.81,
+  a = 0.25,
+  c = 0.81, 
+  c.hat = 0.2,
+  a.hat = 0.008,
+  Q.hat = 2.5
+)
+
+
+# P14 with free P as state variable
+
+
+P14 <- function(time, parms, state){
+  with(as.list(c(state, parms)), {
+    # Producer
+    dx <- b * x * min(1-(x/k), 1-(q/Q)) - min((c*x)/(a+x), (f.hat * theta)/Q) * y
+    
+    # Grazer
+    dy <- min(e.hat * (c*x)/(a+x), Q/theta * (c*x)/(a+x), e.hat * f.hat * Q/theta) * y - d * y
+    
+    # Quota
+    v <- ((c.hat * pf)/(a.hat + pf)) * ((Q.hat - Q)/(Q.hat - q))
+    dQ <- v - b * min(Q * (1-(x/k)), (Q - q))
+    
+    # Free P 
+    dpf <- -v * x + theta * d * y  + min((c*x)/(a+x), (f.hat * theta)/Q) * y * 
+      (Q - min(e.hat, Q/theta) * theta)
+    
+    # return
+    return(list(c(dx, dy, dQ, dpf)))
+  })
+}
+
+
+par.P14 <- list(
+  P = 0.1, # up to 0.2 mg/day
+  b = 1.2, # /day
+  d = 0.25, # /day
+  theta = 0.03, # mg P / mg C
+  q = 0.0038,
+  e.hat = 0.8,
+  k = 1.5,
+  f.hat = 0.81,
+  a = 0.25,
+  c = 0.81, 
+  c.hat = 0.2,
+  a.hat = 0.008,
+  Q.hat = 2.5
+)
+
+pf.0 <- par.P14$P - (par.P14$P - par.P14$theta * .25)*.5 - par.P14$theta * .25
+state = c(x = .5, y = .25, Q = par.P14$P - par.P14$theta * .25, pf = pf.0)
+out <- ode(state, times = 1:80, func = P14_fixed, parms = par.P14)
+tail(out)

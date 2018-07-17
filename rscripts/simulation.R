@@ -11,11 +11,11 @@ source("rscripts/migration.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 10
+xdim <- 5
 # Vertical dimension
-ydim <- 10
+ydim <- 5
 # Number of simulation timesteps (days)
-timesteps <- 100
+timesteps <- 120
 
 
 # set up array to store biomass of prey
@@ -25,13 +25,13 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 # set up array to store biomass of top pred
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
-lake.P <- matrix(runif(xdim*ydim, 0, 2), nrow = ydim, ncol = xdim)
+lake.P <- matrix(runif(xdim*ydim, 0.03, 0.2), nrow = ydim, ncol = xdim)
 
 # initial biomass for both species
 lake.x[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
 lake.y[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
-lake.z[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
-
+#lake.z[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
+lake.z[,,1] <- matrix((lake.P - par.P14fixed$theta * lake.y[,,1])/lake.x[,,1])
 
 ###############################
 # Simulate dynamics
@@ -41,9 +41,9 @@ for(t in 1:(timesteps - 1)){
   for(i in 1:nrow(lake.x)){
     for(j in 1:ncol(lake.x)){
       
-      state = c(x = lake.x[i,j,t], y = lake.y[i,j,t], z = lake.z[i,j,t])
+      state = c(x = lake.x[i,j,t], y = lake.y[i,j,t], Q = lake.z[i,j,t])
       
-      out <- ode(state, 1:2, chen17, par.C17)
+      out <- ode(state, 1:2, P14_fixed, par.P14fixed)
       
       lake.x[i,j,t+1] <- out[2, 2]
       lake.y[i,j,t+1] <- out[2, 3]
@@ -59,7 +59,7 @@ for(t in 1:(timesteps - 1)){
   
   ## Density
   lake.y[,,t+1] <- migration.density(lake.y[,,t], lake.x[,,t], max.move = 1, prop.migrant = .1)
-  lake.z[,,t+1] <- migration.density(lake.z[,,t], lake.y[,,t], max.move = 2, prop.migrant = .1)
+  #lake.z[,,t+1] <- migration.density(lake.z[,,t], lake.y[,,t], max.move = 2, prop.migrant = .1)
   
   if(((t + 1) %% 5) == 0){cat("Day ", t+1, "of ", timesteps, "simulated\n")}
 }
@@ -77,7 +77,7 @@ matplot(t(lake.x[,1,]), typ = "l")
 
 pheatmap::pheatmap(lake.x[,,180], cluster_rows = F, cluster_cols = F, cellwidth = 20, cellheight = 20)
 
-lake.x[1,1,]
+lake.y[1,1,]
 
 all <- cbind(apply(lake.y, 3, sum), apply(lake.z, 3, sum))
 matplot(all, typ = "l")
