@@ -44,13 +44,79 @@ migration.density <- function(ylake, xlake, max.move = 1, prop.migrant){
   new.lake <- ylake
   for(i in 1:nrow(ylake)){
     for(j in 1:ncol(ylake)){
+      #migrants <- ylake[i,j] * prop.migrant
+      #new.lake[i,j] <- ylake[i,j] - migrants
+      
+      xdir <- seq(i-max.move, i+max.move, 1)
+      xdir <- xdir[xdir %in% 1:ncol(xlake)]
+      
+      ydir <- seq(j-max.move, j+max.move, 1)
+      ydir <- ydir[ydir %in% 1:nrow(xlake)]
+      
+      high <- reshape2::melt(xlake[ydir, xdir])
+      high$Var1 <- xdir[high$Var1]
+      high$Var2 <- ydir[high$Var2]
+      high$prob <- order(high$value)/sum(order(high$value))
+      
+      #newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
+      
+      for(x in 1:nrow(high)){
+        new.lake[high$Var1[x], high$Var2[x]] <- new.lake[high$Var1[x], high$Var2[x]] + 
+          ylake[i,j] * high$prob[x]
+      }
+      new.lake[i,j] <- new.lake[i,j] - ylake[i,j]
+      
+      
+    }
+  }
+  return(new.lake)
+}
+
+
+migration.density <- function(ylake, xlake, max.move = 1, prop.migrant){
+  new.lake <- ylake
+  for(i in 1:nrow(ylake)){
+    for(j in 1:ncol(ylake)){
+      #migrants <- ylake[i,j] * prop.migrant
+      #new.lake[i,j] <- ylake[i,j] - migrants
+      
+      xdir <- seq(i-max.move, i+max.move, 1)
+      xdir <- xdir[xdir %in% 1:ncol(xlake)]
+      
+      ydir <- seq(j-max.move, j+max.move, 1)
+      ydir <- ydir[ydir %in% 1:nrow(xlake)]
+      
+      high <- reshape2::melt(xlake[ydir, xdir])
+      high$Var1 <- xdir[high$Var1]
+      high$Var2 <- ydir[high$Var2]
+      high$prob <- order(high$value)/sum(order(high$value))
+      
+      #newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
+      
+      for(x in 1:nrow(high)){
+        new.lake[high$Var1[x], high$Var2[x]] <- new.lake[high$Var1[x], high$Var2[x]] + 
+          ylake[i,j] * high$prob[x]
+      }
+      new.lake[i,j] <- new.lake[i,j] - ylake[i,j]
+      
+      
+    }
+  }
+  return(new.lake)
+}
+
+
+migration.density1 <- function(ylake, xlake, max.move = 1, prop.migrant){
+  new.lake <- ylake
+  for(i in 1:nrow(ylake)){
+    for(j in 1:ncol(ylake)){
       migrants <- ylake[i,j] * prop.migrant
       new.lake[i,j] <- ylake[i,j] - migrants
       
       xdir <- seq(i-max.move, i+max.move, 1)
       xdir <- xdir[xdir %in% 1:ncol(xlake)]
       
-      ydir <- seq(i-max.move, i+max.move, 1)
+      ydir <- seq(j-max.move, j+max.move, 1)
       ydir <- ydir[ydir %in% 1:nrow(xlake)]
       
       high <- reshape2::melt(xlake[xdir, ydir])
