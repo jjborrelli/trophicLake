@@ -2,6 +2,17 @@
 ## Libraries
 library(deSolve)
 
+# Extinction
+
+ext1 <- function (times, states, parms){
+  with(as.list(states), {
+    states[states < 10^-10] <- 0 
+    
+    return(c(states))
+  })
+}
+
+
 # Rosenzweig-MacArthur
 
 romac <- function(time, parms, state){

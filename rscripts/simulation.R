@@ -6,16 +6,19 @@ source("rscripts/pop_dynamics.R")
 # get migration functions
 source("rscripts/migration.R")
 
+# get plotting functions
+source("rscripts/plotting.R")
+
 
 ###############################
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 5
+xdim <- 10
 # Vertical dimension
-ydim <- 5
+ydim <- 10
 # Number of simulation timesteps (days)
-timesteps <- 120
+timesteps <- 300
 
 
 # set up array to store biomass of prey
@@ -25,7 +28,9 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 # set up array to store biomass of top pred
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
-lake.P <- matrix(runif(xdim*ydim, 0.03, 0.2), nrow = ydim, ncol = xdim)
+# gradient
+lake.P <- matrix(sort(runif(xdim*ydim, 0.03, 0.05)), nrow = ydim, ncol = xdim)
+lake.P <- lake.P[sample(1:nrow(lake.P)),]
 
 # initial biomass for both species
 lake.x[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
@@ -36,32 +41,44 @@ lake.z[,,1] <- matrix((lake.P - par.P14fixed$theta * lake.y[,,1])/lake.x[,,1])
 ###############################
 # Simulate dynamics
 
+errors.t <- vector(length = timesteps)
 t0 <- Sys.time()
 for(t in 1:(timesteps - 1)){
+  errors.i <- matrix(nrow = nrow(lake.x), ncol = 3)
   for(i in 1:nrow(lake.x)){
     for(j in 1:ncol(lake.x)){
+      lake.x[,,t][lake.x[,,t] <= 10^-10] <- 0
+      lake.y[,,t][lake.y[,,t] <= 10^-10] <- 0
+      lake.x[,,t][lake.x[,,t] == 0] <- 10^-4
       
+      
+      par.P14fixed$P <- lake.P[i,j]
       state = c(x = lake.x[i,j,t], y = lake.y[i,j,t], Q = lake.z[i,j,t])
       
       out <- ode(state, 1:2, P14_fixed, par.P14fixed)
       
-      lake.x[i,j,t+1] <- out[2, 2]
-      lake.y[i,j,t+1] <- out[2, 3]
-      lake.z[i,j,t+1] <- out[2, 4]
+      errors <- c(is.nan(out[2,2]), is.nan(out[2,3]), is.nan(out[2,4])) 
+      
+      lake.x[i,j,t+1] <- ifelse(is.nan(out[2, 2]), 10^-6, out[2,2])
+      lake.y[i,j,t+1] <- ifelse(is.nan(out[2, 3]), 0, out[2,3])
+      lake.z[i,j,t+1] <- ifelse(is.nan(out[2, 4]), 0, out[2,4])
       
     }
+    errors.i[i, ] <- errors
   }
+  errors.t[t] <- any(is.na(errors.i))
   
   # pick migration
   ## Random
   #lake.x <- migration.random(lake.x, t)
-  #lake.y <- migration.random(lake.y, t)
+  #lake.y[,,t+1] <- migration.random(lake.y[,,t+1])
   
   ## Density
-  lake.y[,,t+1] <- migration.density(lake.y[,,t], lake.x[,,t], max.move = 1, prop.migrant = .1)
-  #lake.z[,,t+1] <- migration.density(lake.z[,,t], lake.y[,,t], max.move = 2, prop.migrant = .1)
+  lake.y[,,t+1] <- migration.density(lake.y[,,t+1], lake.x[,,t+1], max.move = 1, prop.migrant = .1)
+  #lake.x[,,t+1] <- migration.random(lake.x[,,t+1], max.move = 1)
+  #lake.P <- migration.random(lake.P, max.move = 1)
   
-  if(((t + 1) %% 5) == 0){cat("Day ", t+1, "of ", timesteps, "simulated\n")}
+  if(((t + 1) %% 10) == 0){cat("Day ", t+1, "of ", timesteps, "simulated\n")}
 }
 t1 <- Sys.time()
 t1-t0
@@ -70,14 +87,26 @@ t1-t0
 ###############################
 # Visualize results
 
-par(mfrow = c(3,1), mar = c(1,2,1,.2))
-matplot(t(lake.z[,1,]), typ = "l")
-matplot(t(lake.y[,1,]), typ = "l")
-matplot(t(lake.x[,1,]), typ = "l")
+threePlot(3, lake.z, lake.y, lake.x)
 
-pheatmap::pheatmap(lake.x[,,180], cluster_rows = F, cluster_cols = F, cellwidth = 20, cellheight = 20)
+par(mfrow = c(2,1), mar = c(1,2,1,.2))
+pheatmap(apply(lake.x[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.y[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.z[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+
+pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 20, cellheight = 20)
+
+
 
 lake.y[1,1,]
 
-all <- cbind(apply(lake.y, 3, sum), apply(lake.z, 3, sum))
+all <- cbind(apply(lake.x, 3, sum), apply(lake.y, 3, sum))
 matplot(all, typ = "l")
+matplot(all)
+
+spatdynplot(lake.x, t = timesteps, interval = .2, name = "xlake.gif")
+spatdynplot(lake.y, t = timesteps, interval = .2, name = "ylake.gif")
+dev.off()
+
+matplot(t(apply(lake.x, 3, colMeans)), typ = "l")
+apply(lake.y, 3, colMeans)
