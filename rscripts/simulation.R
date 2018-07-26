@@ -29,7 +29,7 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
 # gradient
-lake.P <- matrix(sort(runif(xdim*ydim, 0.03, 0.05)), nrow = ydim, ncol = xdim)
+lake.P <- matrix((runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
 lake.P <- lake.P[sample(1:nrow(lake.P)),]
 
 # initial biomass for both species
@@ -89,19 +89,19 @@ t1-t0
 
 threePlot(3, lake.z, lake.y, lake.x)
 
-par(mfrow = c(2,1), mar = c(1,2,1,.2))
-pheatmap(apply(lake.x[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.y[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.z[,,100:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+#par(mfrow = c(2,1), mar = c(1,2,1,.2))
+pheatmap(apply(lake.x[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.y[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.z[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 
-pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 20, cellheight = 20)
+pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
 
 
 
 lake.y[1,1,]
 
-all <- cbind(apply(lake.x, 3, sum), apply(lake.y, 3, sum))
-matplot(all, typ = "l")
+all2 <- cbind(apply(lake.x, 3, sum), apply(lake.y, 3, sum))
+matplot(all2, typ = "l")
 matplot(all)
 
 spatdynplot(lake.x, t = timesteps, interval = .2, name = "xlake.gif")
@@ -110,3 +110,4 @@ dev.off()
 
 matplot(t(apply(lake.x, 3, colMeans)), typ = "l")
 apply(lake.y, 3, colMeans)
+

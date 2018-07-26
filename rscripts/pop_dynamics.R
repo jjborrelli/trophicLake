@@ -221,6 +221,10 @@ par.P14fixed <- list(
   Q.hat = 2.5
 )
 
+#state <- c(x = .5, y = .5)
+#state <- c(state, Q = (.03 - par.P14fixed$theta * state[2])/state[1])
+#names(state) <- c("x", "y", "Q")
+#matplot(ode(state, parms = par.P14fixed, func = P14_fixed, times = 1:300)[,-c(1,4)])
 
 # P14 with free P as state variable
 
@@ -262,8 +266,3 @@ par.P14 <- list(
   a.hat = 0.008,
   Q.hat = 2.5
 )
-
-pf.0 <- par.P14$P - (par.P14$P - par.P14$theta * .25)*.5 - par.P14$theta * .25
-state = c(x = .5, y = .25, Q = par.P14$P - par.P14$theta * .25, pf = pf.0)
-out <- ode(state, times = 1:80, func = P14_fixed, parms = par.P14)
-tail(out)

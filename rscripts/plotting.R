@@ -1,5 +1,6 @@
 # Plotting
 library(animation)
+library(pheatmap)
 
 ## plot the nth column of each "lake" through time
 
