@@ -16,7 +16,7 @@ threePlot <- function(n, lake1, lake2, lake3){
 
 spatdynplot <- function(lake, t, interval, name){
   
-  saveGIF({
+  saveHTML({
     for(i in 1:t){
       (pheatmap(lake[,,i], cluster_rows = F, cluster_cols = F, main = i))
     }
