@@ -14,9 +14,9 @@ source("rscripts/plotting.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 10
+xdim <- 100
 # Vertical dimension
-ydim <- 10
+ydim <- 100
 # Number of simulation timesteps (days)
 timesteps <- 300
 
@@ -29,9 +29,10 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
 # gradient
-lake.P <- matrix((runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
+lake.P <- matrix(sort(runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
 lake.P <- lake.P[sample(1:nrow(lake.P)),]
-
+cols <- rev(sort(sample(1:ncol(lake.P), ncol(lake.P)/2)))
+lake.P <- (lake.P[,c(cols, (1:nrow(lake.P))[-cols])])
 # initial biomass for both species
 lake.x[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
 lake.y[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
@@ -90,13 +91,14 @@ t1-t0
 threePlot(3, lake.z, lake.y, lake.x)
 
 #par(mfrow = c(2,1), mar = c(1,2,1,.2))
-pheatmap(apply(lake.x[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.x[,,290:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 pheatmap(apply(lake.y[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 pheatmap(apply(lake.z[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 
-pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
+pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 3, cellheight = 3)
 
-
+saveRDS(list(lake.x, lake.y, lake.z, lake.P), "sides_gradientP_run_100.rds")
+#run <- readRDS("gradientP_run_100.rds")
 
 lake.y[1,1,]
 
@@ -104,10 +106,20 @@ all2 <- cbind(apply(lake.x, 3, sum), apply(lake.y, 3, sum))
 matplot(all2, typ = "l")
 matplot(all)
 
-spatdynplot(lake.x, t = timesteps, interval = .2, name = "xlake.gif")
-spatdynplot(lake.y, t = timesteps, interval = .2, name = "ylake.gif")
+spatdynplot(lake.x, t = timesteps, interval = .2, name = "xlake.html")
+spatdynplot(run[[2]], t = timesteps, interval = .2, name = "ylake.html")
 dev.off()
 
 matplot(t(apply(lake.x, 3, colMeans)), typ = "l")
 apply(lake.y, 3, colMeans)
 
+
+library(reshape2)
+library(ggplot2)
+library(gganimate)
+
+lx <- data.frame(melt(lake.x), lake = "producer")
+ly <- data.frame(melt(lake.y), lake = "grazer")
+
+ggplot(dplyr::filter(rbind(lx, ly), Var3 %in% 1:100), aes(x = Var1, y = Var2, fill = value)) + geom_tile() + facet_wrap(~lake) + 
+  transition_states(Var3,transition_length = 1, state_length = 2)
