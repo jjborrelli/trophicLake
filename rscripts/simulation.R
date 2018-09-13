@@ -14,9 +14,9 @@ source("rscripts/plotting.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 100
+xdim <- 10
 # Vertical dimension
-ydim <- 100
+ydim <- 10
 
 # Number of simulation timesteps (days)
 timesteps <- 300
@@ -30,10 +30,10 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
 # gradient
-lake.P <- matrix(sort(runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
+lake.P <- matrix(sort(runif(xdim*ydim, .08, .1)), nrow = ydim, ncol = xdim)
 lake.P <- lake.P[sample(1:nrow(lake.P)),]
-cols <- rev(sort(sample(1:ncol(lake.P), ncol(lake.P)/2)))
-lake.P <- (lake.P[,c(cols, (1:nrow(lake.P))[-cols])])
+#cols <- rev(sort(sample(1:ncol(lake.P), ncol(lake.P)/2)))
+#lake.P <- (lake.P[,c(cols, (1:nrow(lake.P))[-cols])])
 # initial biomass for both species
 lake.x[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
 lake.y[,,1] <- matrix(runif(ydim * xdim), ydim, xdim)
@@ -86,9 +86,14 @@ t1 <- Sys.time()
 t1-t0
 
 
+#run1 <- list(lake.x, lake.y, lake.z, lake.P)
+#run2 <- list(lake.x, lake.y, lake.z, lake.P)
+run3 <- list(lake.x, lake.y, lake.z, lake.P)
+#run4 <- list(lake.x, lake.y, lake.z, lake.P)
 ###############################
 # Visualize results
-
+test <- run4
+threePlot(3, test[[3]], test[[2]], test[[1]])
 threePlot(3, lake.z, lake.y, lake.x)
 
 #par(mfrow = c(2,1), mar = c(1,2,1,.2))
@@ -98,7 +103,7 @@ pheatmap(apply(lake.y[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster
 pheatmap(apply(lake.z[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 
 
-pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 3, cellheight = 3)
+pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
 
 saveRDS(list(lake.x, lake.y, lake.z, lake.P), "sides_gradientP_run_100.rds")
 #run <- readRDS("gradientP_run_100.rds")

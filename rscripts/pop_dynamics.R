@@ -195,7 +195,7 @@ P14_fixed <- function(time, parms, state){
     dy <- min(e.hat * (c*x)/(a+x), Q/theta * (c*x)/(a+x), e.hat * f.hat * Q/theta) * y - d * y
     
     # Quota
-    pf <- P - Q*x - theta * y
+    pf <- P - Q*x - theta * y 
     v <- ((c.hat * pf)/(a.hat + pf)) * ((Q.hat - Q)/(Q.hat - q))
     dQ <- v - b * min(Q * (1-(x/k)), (Q - q))
     
@@ -221,16 +221,23 @@ par.P14fixed <- list(
   Q.hat = 2.5
 )
 
-#state <- c(x = .5, y = .5)
-#state <- c(state, Q = (.03 - par.P14fixed$theta * state[2])/state[1])
-#names(state) <- c("x", "y", "Q")
-#matplot(ode(state, parms = par.P14fixed, func = P14_fixed, times = 1:300)[,-c(1,4)])
+state <- c(x = .5, y = .5)
+state <- c(state, Q = (.03 - par.P14fixed$theta * state[2])/state[1])
+names(state) <- c("x", "y", "Q")
+out <- (ode(state, parms = par.P14fixed, func = P14_fixed, times = 1:300))
+plot(out)
+
 
 # P14 with free P as state variable
 
 
 P14 <- function(time, parms, state){
   with(as.list(c(state, parms)), {
+    x <- max(0, x)
+    y <- max(0, y)
+    Q <- max(0, Q)
+    pf <- max(0, pf)
+    
     # Producer
     dx <- b * x * min(1-(x/k), 1-(q/Q)) - min((c*x)/(a+x), (f.hat * theta)/Q) * y
     
@@ -266,3 +273,15 @@ par.P14 <- list(
   a.hat = 0.008,
   Q.hat = 2.5
 )
+
+
+x <- .5
+y <- .25
+Premain <- par.P14$P - par.P14$theta * y
+pf <- Premain/2
+Q <- (Premain/2)/x
+state <- c(x = x, y = y, Q = Q, pf = pf)
+out <- (ode(state, parms = par.P14, func = P14, times = seq(1, 500, 1)))
+head(out)
+plot(out)
+tail(out)
