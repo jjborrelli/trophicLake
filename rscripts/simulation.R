@@ -14,9 +14,9 @@ source("rscripts/plotting.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 10
+xdim <- 25
 # Vertical dimension
-ydim <- 10
+ydim <- 5
 # Number of simulation timesteps (days)
 timesteps <- 300
 
@@ -29,7 +29,7 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
 # gradient
-lake.P <- matrix((runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
+lake.P <- matrix(sort(runif(xdim*ydim, .03, 1)), nrow = ydim, ncol = xdim)
 lake.P <- lake.P[sample(1:nrow(lake.P)),]
 
 # initial biomass for both species
@@ -90,9 +90,9 @@ t1-t0
 threePlot(3, lake.z, lake.y, lake.x)
 
 #par(mfrow = c(2,1), mar = c(1,2,1,.2))
-pheatmap(apply(lake.x[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.y[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.z[,,250:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.x[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.y[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.z[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
 
 pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
 
