@@ -122,3 +122,54 @@ migration.density1 <- function(ylake, xlake, max.move = 1, prop.migrant){
   }
   return(new.lake)
 }
+
+
+migration <- function(xlake, ylake, qlake, prop.migrant = 0.1, method = "random", max.move = 1){
+  # create new lake to reflect migration
+  new.lake <- ylake
+  # how much migration from each cell
+  lake.migrant <- ylake * prop.migrant
+  
+  for(i in 1:nrow(new.lake)){
+    for(j in 1:ncol(new.lake)){
+      
+      # determine all possible vertical moves
+      rdir <- seq(i-max.move, i+max.move, 1)
+      rdir <- rdir[rdir %in% 1:nrow(xlake)]
+      #determine all possible horizontal moves
+      cdir <- seq(j-max.move, j+max.move, 1)
+      cdir <- cdir[cdir %in% 1:ncol(xlake)]
+      
+      if(method == "random"){
+        xsampl <- sample(rdir, 1)
+        ysampl <- sample(cdir, 1)
+      }
+      
+      if(method == "density"){
+        high <- reshape2::melt(xlake[rdir, cdir])
+        high$Var1 <- rdir[high$Var1]
+        high$Var2 <- cdir[high$Var2]
+        high$prob <- (high$value)/sum((high$value))
+        newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
+        xsampl <- newcell$Var1
+        ysampl <- newcell$Var2
+      }
+      
+      if(method == "quality"){
+        high <- reshape2::melt(xlake[rdir, cdir] * qlake[rdir, cdir])
+        high$Var1 <- rdir[high$Var1]
+        high$Var2 <- cdir[high$Var2]
+        high$prob <- (high$value)/sum((high$value))
+        newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
+        xsampl <- newcell$Var1
+        ysampl <- newcell$Var2
+      }
+      
+      
+      new.lake[xsampl, ysampl] <- new.lake[xsampl, ysampl] + lake.migrant[i,j]
+      new.lake[i,j] <- new.lake[i,j] - lake.migrant[i,j]
+    }
+  }
+  
+  return(new.lake)
+}
