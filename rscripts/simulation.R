@@ -14,9 +14,9 @@ source("rscripts/plotting.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 10
+xdim <- 20
 # Vertical dimension
-ydim <- 10
+ydim <- 20
 
 # Number of simulation timesteps (days)
 timesteps <- 300
@@ -30,7 +30,7 @@ lake.y <- array(0, dim = c(ydim, xdim, timesteps))
 lake.z <- array(0, dim = c(ydim, xdim, timesteps))
 # set up lake phosphorus concentration
 # gradient
-lake.P <- matrix(sort(runif(xdim*ydim, .08, .1)), nrow = ydim, ncol = xdim)
+lake.P <- matrix(sort(runif(xdim*ydim, .03, .05)), nrow = ydim, ncol = xdim)
 lake.P <- lake.P[sample(1:nrow(lake.P)),]
 #cols <- rev(sort(sample(1:ncol(lake.P), ncol(lake.P)/2)))
 #lake.P <- (lake.P[,c(cols, (1:nrow(lake.P))[-cols])])
@@ -70,15 +70,11 @@ for(t in 1:(timesteps - 1)){
   }
   errors.t[t] <- any(is.na(errors.i))
   
-  # pick migration
-  ## Random
-  #lake.x <- migration.random(lake.x, t)
-  #lake.y[,,t+1] <- migration.random(lake.y[,,t+1])
+
+  ## Zoop Migration
+  lake.y[,,t+1] <- migration(lake.y[,,t+1], lake.x[,,t+1], lake.z[,,t+1],
+                             max.move = 1, prop.migrant = .1, method = "density")
   
-  ## Density
-  lake.y[,,t+1] <- migration.density(lake.y[,,t+1], lake.x[,,t+1], max.move = 1, prop.migrant = .1)
-  #lake.x[,,t+1] <- migration.random(lake.x[,,t+1], max.move = 1)
-  #lake.P <- migration.random(lake.P, max.move = 1)
   
   if(((t + 1) %% 10) == 0){cat("Day ", t+1, "of ", timesteps, "simulated\n")}
 }
@@ -87,20 +83,20 @@ t1-t0
 
 
 #run1 <- list(lake.x, lake.y, lake.z, lake.P)
-#run2 <- list(lake.x, lake.y, lake.z, lake.P)
-run3 <- list(lake.x, lake.y, lake.z, lake.P)
+run2 <- list(lake.x, lake.y, lake.z, lake.P)
+#run3 <- list(lake.x, lake.y, lake.z, lake.P)
 #run4 <- list(lake.x, lake.y, lake.z, lake.P)
 ###############################
 # Visualize results
-test <- run4
+test <- run2
 threePlot(3, test[[3]], test[[2]], test[[1]])
 threePlot(3, lake.z, lake.y, lake.x)
 
 #par(mfrow = c(2,1), mar = c(1,2,1,.2))
 
-pheatmap(apply(lake.x[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.y[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
-pheatmap(apply(lake.z[,,295:timesteps], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 15, cellheight = 15)
+pheatmap(apply(lake.x[,,250], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
+pheatmap(apply(lake.y[,,251], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
+pheatmap(apply(lake.z[,,250], c(1,2), mean), cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
 
 
 pheatmap(lake.P, cluster_rows = F, cluster_cols = F, cellwidth = 5, cellheight = 5)
