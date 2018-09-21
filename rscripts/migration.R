@@ -124,7 +124,9 @@ migration.density1 <- function(ylake, xlake, max.move = 1, prop.migrant){
 }
 
 
-migration <- function(xlake, ylake, qlake, prop.migrant = 0.1, method = "random", max.move = 1){
+migration <- function(ylake, xlake, qlake, plake, theta, prop.migrant = 0.1, method = "random", max.move = 1){
+  
+  new.lake.P <- plake
   # create new lake to reflect migration
   new.lake <- ylake
   # how much migration from each cell
@@ -149,7 +151,13 @@ migration <- function(xlake, ylake, qlake, prop.migrant = 0.1, method = "random"
         high <- reshape2::melt(xlake[rdir, cdir])
         high$Var1 <- rdir[high$Var1]
         high$Var2 <- cdir[high$Var2]
-        high$prob <- (high$value)/sum((high$value))
+        
+        if(sum(high$value > 0)){
+          high$prob <- (high$value)/sum((high$value))
+        }else{
+          high$prob <- .25
+        }
+        
         newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
         xsampl <- newcell$Var1
         ysampl <- newcell$Var2
@@ -159,17 +167,39 @@ migration <- function(xlake, ylake, qlake, prop.migrant = 0.1, method = "random"
         high <- reshape2::melt(xlake[rdir, cdir] * qlake[rdir, cdir])
         high$Var1 <- rdir[high$Var1]
         high$Var2 <- cdir[high$Var2]
-        high$prob <- (high$value)/sum((high$value))
+        if(sum(high$value > 0)){
+          high$prob <- (high$value)/sum((high$value))
+        }else{
+          high$prob <- .25
+        }
         newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
         xsampl <- newcell$Var1
         ysampl <- newcell$Var2
       }
       
+      if(method == "quota"){
+        high <- reshape2::melt(qlake[rdir, cdir])
+        high$Var1 <- rdir[high$Var1]
+        high$Var2 <- cdir[high$Var2]
+        if(sum(high$value > 0)){
+          high$prob <- (high$value)/sum((high$value))
+        }else{
+          high$prob <- .25
+        }
+        newcell <- high[sample(1:nrow(high), 1, prob = high$prob),]
+        xsampl <- newcell$Var1
+        ysampl <- newcell$Var2
+      }
+      
+      pmoved <- lake.migrant * theta
       
       new.lake[xsampl, ysampl] <- new.lake[xsampl, ysampl] + lake.migrant[i,j]
       new.lake[i,j] <- new.lake[i,j] - lake.migrant[i,j]
+      
+      new.lake.P[xsampl, ysampl] <- new.lake.P[xsampl, ysampl] + pmoved[i,j]
+      new.lake.P[i,j] <- new.lake.P[i,j] - pmoved[i,j]
     }
   }
   
-  return(new.lake)
+  return(list(new.lake, new.lake.P))
 }
