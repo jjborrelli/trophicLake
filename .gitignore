@@ -38,6 +38,7 @@ rsconnect/
 
 # images
 *.gif
+*.png
 
 # data
 *.rds
