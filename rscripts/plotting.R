@@ -11,6 +11,14 @@ threePlot <- function(n, lake1, lake2, lake3){
   matplot(t(lake3[,n,]), typ = "l")
 }
 
+lakeDynPlot <- function(dyn){
+  par(mfrow = c(4,1), mar = c(1,2,1,.2))
+  matplot(t(apply(dyn[[4]], 3, as.vector))[-c(1:5),], typ = "l")
+  matplot(t(apply(dyn[[3]], 3, as.vector))[-c(1:5),], typ = "l")
+  matplot(t(apply(dyn[[2]], 3, as.vector))[-c(1:5),], typ = "l")
+  matplot(t(apply(dyn[[1]], 3, as.vector))[-c(1:5),], typ = "l")
+} 
+
 
 ## plot heatmap of the dynamics
 
