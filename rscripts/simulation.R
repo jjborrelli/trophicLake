@@ -14,12 +14,12 @@ source("rscripts/plotting.R")
 # Set up the lake
 
 # Horizontal dimension
-xdim <- 40
+xdim <- 10
 # Vertical dimension
-ydim <- 40
+ydim <- 10
 
 # Number of simulation timesteps (days)
-timesteps <- 100
+timesteps <- 500
 
 
 # set up array to store biomass of prey
@@ -87,12 +87,12 @@ t1 <- Sys.time()
 t1-t0
 
 
-#run1 <- list(lake.x, lake.y, lake.z, lake.P)
-#run2 <- list(lake.x, lake.y, lake.z, lake.P)
-#run3 <- list(lake.x, lake.y, lake.z, lake.P)
-#run4 <- list(lake.x, lake.y, lake.z, lake.P)
+#run1 <- list(lake.x, lake.y, lake.z, lake.P) # random
+#run2 <- list(lake.x, lake.y, lake.z, lake.P) # density
+#run3 <- list(lake.x, lake.y, lake.z, lake.P) # quality 
+#run4 <- list(lake.x, lake.y, lake.z, lake.P) # quota
 
-#run1.1 <- list(lake.x, lake.y, lake.z, lake.P)
+run1.1 <- list(lake.x, lake.y, lake.z, lake.P)
 #run2.1 <- list(lake.x, lake.y, lake.z, lake.P)
 #run3.1 <- list(lake.x, lake.y, lake.z, lake.P)
 
@@ -146,6 +146,9 @@ dev.off()
 
 matplot(t(apply(lake.x, 3, colMeans)), typ = "l")
 apply(lake.y, 3, colMeans)
+
+matplot(cbind(t(lake.P[1,,]),t(lake.P[2,,]),t(lake.P[3,,]),t(lake.P[4,,])), typ = "l")
+
 
 
 library(reshape2)
