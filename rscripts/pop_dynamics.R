@@ -275,13 +275,13 @@ par.P14 <- list(
 )
 
 
-x <- .5
-y <- .25
-Premain <- par.P14$P - par.P14$theta * y
-pf <- Premain/2
-Q <- (Premain/2)/x
-state <- c(x = x, y = y, Q = Q, pf = pf)
-out <- (ode(state, parms = par.P14, func = P14, times = seq(1, 500, 1)))
-head(out)
-plot(out)
-tail(out)
+#x <- .5
+#y <- .25
+#Premain <- par.P14$P - par.P14$theta * y
+#pf <- Premain/2
+#Q <- (Premain/2)/x
+#state <- c(x = x, y = y, Q = Q, pf = pf)
+#out <- (ode(state, parms = par.P14, func = P14, times = seq(1, 500, 1)))
+#head(out)
+#plot(out)
+#tail(out)
