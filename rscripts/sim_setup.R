@@ -91,7 +91,7 @@ run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quali
 ## Example 
 
 
-mlak <- make_lakes(10, 10, 100, .03, .2, par.P14fixed$theta)
+mlak <- make_lakes(10, 10, 300, 1, 1, par.P14fixed$theta)
 mig.types <- c("random", "density", "quality", "quota")
 dyn <- list()
 for(i in 1:4){
@@ -105,3 +105,15 @@ for(i in 1:4){
   matplot(t(apply(dyn[[i]][[2]], 3, as.vector))[-c(1:5),], typ = "l")
   matplot(t(apply(dyn[[i]][[1]], 3, as.vector))[-c(1:5),], typ = "l")
 }
+
+dfphyto <- rbind(reshape2::melt(dyn[[2]][[1]]), reshape2::melt(dyn[[2]][[2]]))
+dfphyto$type <- rep(c("phyto", "zoop"), each = 30000)
+anim <- ggplot(dfphyto, aes(x = Var1, y = Var2, fill = value)) + geom_tile() + 
+  scale_fill_continuous(low = "lightblue", high = "darkgreen") + 
+  labs(title = "Phytoplankton in timestep: {closest_state}", fill = "Biomass") + 
+  facet_wrap(~type) + 
+  theme_void() + 
+  transition_states(Var3, transition_length = 1, state_length = 1) + 
+  enter_fade() + exit_fade()
+
+animate(anim, fps = 20, duration = 15)
