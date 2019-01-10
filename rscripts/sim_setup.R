@@ -31,7 +31,7 @@ make_lakes <- function(xdim, ydim, timesteps, pmin = 0.8, pmax = 0.8, theta, gra
 
 ## Simulation
 
-run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quality", "quota")){
+run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quality", "quota"), p.mig = .1){
   
   if(length(mig.method) > 1){
     mig.method <- mig.method[1]
@@ -57,7 +57,9 @@ run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quali
         
         pars$P <- lake.P[i,j,t]
         state = c(x = lake.x[i,j,t], y = lake.y[i,j,t], Q = lake.z[i,j,t])
+        #state = c(x = lake.x[i,j,t], y = lake.y[i,j,t])
         
+        #out <- ode(state, 1:2, P14_fixed_alt, pars)
         out <- ode(state, 1:2, P14_fixed, pars)
         
         
@@ -74,9 +76,9 @@ run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quali
     lake.y[,,t+1][lake.y[,,t+1] < 0] <- 0
     
     ## Zoop Migration
-    mig <- migration(lake.y[,,t+1], lake.x[,,t+1], lake.z[,,t+1], lake.P[,,t], 
+    mig <- migration_diffuse(lake.y[,,t+1], lake.x[,,t+1], lake.z[,,t+1], lake.P[,,t], 
                      pars$theta,
-                     max.move = 1, prop.migrant = .1, method = mig.method)
+                     max.move = 1, prop.migrant = p.mig, method = mig.method)
     lake.y[,,t+1] <- mig[[1]]
     lake.P[,,t+1] <- mig[[2]]
     
@@ -88,32 +90,76 @@ run_dynamics <- function(lakes, pars, mig.method = c("random", "density", "quali
   return(list(lake.x, lake.y, lake.z, lake.P))
 }
 
-## Example 
 
 
-mlak <- make_lakes(10, 10, 300, 1, 1, par.P14fixed$theta)
-mig.types <- c("random", "density", "quality", "quota")
-dyn <- list()
-for(i in 1:4){
-  dyn[[i]] <- run_dynamics(mlak, par.P14fixed, mig.method = mig.types[i])
+#filenames <- c("x100_m-8_p-03.rds","x100_m-8_p-08.rds","x100_m-8_p-13.rds","x100_m-8_p-18.rds")
+filenames <- c("diff_x100_m-8_p-03.rds","diff_x100_m-8_p-08.rds","diff_x100_m-8_p-13.rds","diff_x100_m-8_p-18.rds")
+#filenames <- c("x100_m-8_p-03_alt.rds","x100_m-8_p-18_alt.rds")
+totP <- c(.03, .08, .13, .18)
+#totP <- c(.03, .18)
+timing <-c()
+for(x in 1:2){
+  ## Example 
+  tA <- Sys.time()
+  mlak <- make_lakes(100, 100, 300, totP[x], totP[x], par.P14fixed$theta)
+  mig.types <- c("random", "density", "quality", "quota")
+  dyn <- list()
+  for(i in 1:4){
+    dyn[[i]] <- run_dynamics(mlak, par.P14fixed, mig.method = mig.types[i], p.mig = .8)
+  }
+  
+  saveRDS(dyn, filenames[x])
+  rm(dyn)
+  tB <- Sys.time()
+  
+  timing[x] <- tB - tA
 }
+
+
+dyn <- readRDS("x100_m-8_p-03.rds")
 
 par(mfcol = c(4,4), mar = c(1,2,1,.2))
 for(i in 1:4){
-  matplot(t(apply(dyn[[i]][[4]], 3, as.vector))[-c(1:5),], typ = "l")
-  matplot(t(apply(dyn[[i]][[3]], 3, as.vector))[-c(1:5),], typ = "l")
-  matplot(t(apply(dyn[[i]][[2]], 3, as.vector))[-c(1:5),], typ = "l")
-  matplot(t(apply(dyn[[i]][[1]], 3, as.vector))[-c(1:5),], typ = "l")
+  matplot(t(apply(dyn[[i]][[4]], 3, as.vector))[,1:10], typ = "l")
+  matplot(t(apply(dyn[[i]][[3]], 3, as.vector))[,1:10], typ = "l")
+  matplot(t(apply(dyn[[i]][[2]], 3, as.vector))[,1:10], typ = "l")
+  matplot(t(apply(dyn[[i]][[1]], 3, as.vector))[,1:10], typ = "l")
 }
 
-dfphyto <- rbind(reshape2::melt(dyn[[2]][[1]]), reshape2::melt(dyn[[2]][[2]]))
-dfphyto$type <- rep(c("phyto", "zoop"), each = 30000)
+
+library(ggplot2)
+library(animation)
+library(gganimate)
+library(patchwork)
+
+t1 <- 93
+
+dfphyto <- (reshape2::melt(dyn[[2]][[1]][,,t1]))
+dfphyto$spp <- "Phytoplankton"
+pp <- ggplot(dfphyto, aes(x = Var1, y = Var2, fill = value)) + geom_tile() + 
+  scale_fill_gradient(limits = c(0, 1.5), low = "lightblue", high = "darkgreen") + theme_void() + facet_wrap(~spp)
+
+
+dfzoop <- (reshape2::melt(dyn[[2]][[2]][,,t1]))
+dfzoop$spp <- "Zooplankton"
+zp <- ggplot(dfzoop, aes(x = Var1, y = Var2, fill = value)) + geom_tile() + 
+  scale_fill_gradient(limits = c(0, 6), low = "lightblue", high = "darkblue") + theme_void() + facet_wrap(~spp)
+
+pp + zp + plot_layout(ncol = 1, heights = c(1, 1))
+
+boxplot(dyn[[2]][[2]])
+max(dfzoop$value)
+
+dyn <- readRDS("x100_m-8_p-03.rds")
+
+dfphyto <- (reshape2::melt(dyn[[1]][[1]]))
 anim <- ggplot(dfphyto, aes(x = Var1, y = Var2, fill = value)) + geom_tile() + 
   scale_fill_continuous(low = "lightblue", high = "darkgreen") + 
   labs(title = "Phytoplankton in timestep: {closest_state}", fill = "Biomass") + 
-  facet_wrap(~type) + 
   theme_void() + 
   transition_states(Var3, transition_length = 1, state_length = 1) + 
   enter_fade() + exit_fade()
 
-animate(anim, fps = 20, duration = 15)
+
+animate(anim, fps = 20, duration = 30)
+
