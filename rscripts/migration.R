@@ -203,3 +203,55 @@ migration <- function(ylake, xlake, qlake, plake, theta, prop.migrant = 0.1, met
   
   return(list(new.lake, new.lake.P))
 }
+
+migration_diffuse <- function(ylake, xlake, qlake, plake, theta, prop.migrant = 0.1, method = "random", max.move = 1){
+  
+  # how much migration from each cell
+  lake.migrant <- ylake * prop.migrant
+
+  # create new lake to reflect migration
+  new.lake <- ylake - lake.migrant
+  
+  new.lake.P <- plake - (lake.migrant * theta)
+  
+  for(i in 1:nrow(new.lake)){
+    for(j in 1:ncol(new.lake)){
+      
+      # determine all possible vertical moves
+      rdir <- seq(i-max.move, i+max.move, 1)
+      rdir <- rdir[rdir %in% 1:nrow(xlake)]
+      #determine all possible horizontal moves
+      cdir <- seq(j-max.move, j+max.move, 1)
+      cdir <- cdir[cdir %in% 1:ncol(xlake)]
+      
+      if(method == "random"){
+        cells <- expand.grid(rdir, cdir)
+        zmove <- diff(c(0, sort(runif(nrow(cells)-1, 0, lake.migrant[i,j])), lake.migrant[i,j]))
+        new.lake[rdir, cdir] <- new.lake[rdir, cdir] + zmove
+        new.lake.P[rdir, cdir] <- new.lake.P[rdir, cdir] + (zmove * theta)
+      }
+      
+      if(method == "density"){
+        zmove <- (xlake[rdir,cdir]/sum(xlake[rdir,cdir]) * lake.migrant[i,j])
+        new.lake[rdir, cdir] <- new.lake[rdir, cdir] + zmove
+        new.lake.P[rdir, cdir] <- new.lake.P[rdir, cdir] + (zmove * theta)
+      }
+      
+      if(method == "quality"){
+        qualake <- xlake * qlake
+        zmove <- (qualake[rdir,cdir]/sum(qualake[rdir,cdir]) * lake.migrant[i,j])
+        new.lake[rdir, cdir] <- new.lake[rdir, cdir] + zmove
+        new.lake.P[rdir, cdir] <- new.lake.P[rdir, cdir] + (zmove * theta)
+      }
+      
+      if(method == "quota"){
+        zmove <- (qlake[rdir,cdir]/sum(qlake[rdir,cdir]) * lake.migrant[i,j])
+        new.lake[rdir, cdir] <- new.lake[rdir, cdir] + zmove
+        new.lake.P[rdir, cdir] <- new.lake.P[rdir, cdir] + (zmove * theta)
+      }
+      
+    }
+  }
+  
+  return(list(new.lake, new.lake.P))
+}

@@ -205,6 +205,25 @@ P14_fixed <- function(time, parms, state){
 }
 
 
+P14_fixed_alt <- function(time, parms, state){
+  with(as.list(c(state, parms)), {
+    # Producer
+    dx <- b * x * min(1-(x/k)) - min((c*x)/(a+x)) * y
+    
+    # Grazer
+    dy <- min(e.hat * (c*x)/(a+x)) * y - d * y
+    
+    # Quota
+    #pf <- P - Q*x - theta * y 
+    #v <- ((c.hat * pf)/(a.hat + pf)) * ((Q.hat - Q)/(Q.hat - q))
+    #dQ <- v - b * min(Q * (1-(x/k)), (Q - q))
+    
+    # return
+    return(list(c(dx, dy)))
+  })
+}
+
+
 par.P14fixed <- list(
   P = 0.03, # up to 0.2 mg/day
   b = 1.2, # /day
